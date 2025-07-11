@@ -1,0 +1,53 @@
+@startuml call_center_components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Диаграмма компонентов передачи ставок в кол-центры
+
+Person(call_center_manager, "Менеджер кол-центра", "Консультирует клиентов")
+Person(partner_manager, "Менеджер партнерского кол-центра", "Работает с файлами ставок")
+Person(deposit_manager, "Менеджер депозитов", "Управляет ставками")
+
+System_Boundary(banking_system, "Банковская система Стандарт") {
+    Component(rates_service, "Сервис управления ставками", "Java Spring Boot", "Основной сервис для работы со ставками")
+    
+    Component(rates_distribution, "Rates Distribution Service", "Java Spring Boot", "Рассылка ставок в кол-центры")
+    Component(sftp_gateway, "SFTP Gateway", "Java + JSch", "Передача файлов партнеру")
+    Component(notification_service, "Notification Service", "Java Spring Boot", "Уведомления о сбоях")
+    
+    Component(call_center_api, "Call Center API", "REST API", "API для получения ставок кол-центром")
+    Component(monitoring_api, "Monitoring API", "REST API", "API для мониторинга передачи ставок")
+    
+    ComponentDb(rates_db, "БД Ставок", "MS SQL Server", "Актуальные ставки")
+    ComponentDb(distribution_log_db, "БД Логов", "MS SQL Server", "Логи передачи ставок")
+}
+
+System(call_center_system, "Система кол-центра", "Java Spring Boot + PostgreSQL")
+System_Ext(partner_call_center, "Партнерский кол-центр", "Внешняя система")
+System_Ext(sftp_server, "SFTP-сервер партнера", "Файловое хранилище")
+
+Rel(call_center_manager, call_center_system, "Работает с системой", "Веб-интерфейс")
+Rel(partner_manager, partner_call_center, "Работает с файлами", "Локальные файлы")
+Rel(deposit_manager, rates_service, "Управляет ставками", "Веб-интерфейс")
+
+Rel(rates_service, rates_distribution, "Уведомляет об изменениях", "Event")
+Rel(rates_distribution, call_center_api, "Подготавливает данные", "Internal API")
+Rel(rates_distribution, sftp_gateway, "Запускает передачу файла", "Internal API")
+Rel(rates_distribution, notification_service, "Отправляет уведомления", "Internal API")
+
+Rel(call_center_system, call_center_api, "Запрашивает актуальные ставки", "REST API")
+Rel(sftp_gateway, sftp_server, "Передает файлы", "SFTP")
+Rel(partner_call_center, sftp_server, "Загружает файлы", "SFTP")
+
+Rel(rates_service, rates_db, "Читает/записывает ставки", "SQL")
+Rel(rates_distribution, distribution_log_db, "Логирует операции", "SQL")
+Rel(call_center_api, rates_db, "Читает ставки", "SQL")
+
+Rel(monitoring_api, distribution_log_db, "Читает логи", "SQL")
+Rel(deposit_manager, monitoring_api, "Получает отчеты", "REST API")
+
+Lay_R(rates_service, rates_distribution)
+Lay_R(rates_distribution, sftp_gateway)
+Lay_D(rates_service, rates_db)
+Lay_D(rates_distribution, distribution_log_db)
+
+@enduml 

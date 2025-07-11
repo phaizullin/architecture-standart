@@ -1,0 +1,32 @@
+@startuml call_center_context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Контекстная диаграмма передачи ставок в кол-центры
+
+Person(client, "Клиент банка", "Звонит в кол-центр для консультации по депозитам")
+Person(call_center_manager, "Менеджер кол-центра", "Консультирует клиентов по актуальным ставкам")
+Person(partner_manager, "Менеджер партнерского кол-центра", "Консультирует клиентов по ставкам из файлов")
+Person(deposit_manager, "Менеджер депозитов", "Управляет ставками и контролирует их передачу")
+
+System(banking_system, "Банковская система Стандарт", "Управляет ставками по депозитам и обеспечивает их передачу в кол-центры")
+
+System(call_center_system, "Система кол-центра", "Получает актуальные ставки через API для консультирования клиентов")
+System_Ext(partner_call_center, "Партнерский кол-центр", "Получает ставки в виде файлов по SFTP")
+
+System_Ext(sftp_server, "SFTP-сервер партнера", "Принимает файлы с актуальными ставками")
+
+Rel(client, call_center_system, "Звонит для консультации", "Телефон")
+Rel(client, partner_call_center, "Звонит для консультации", "Телефон")
+
+Rel(call_center_manager, call_center_system, "Консультирует по ставкам", "Веб-интерфейс")
+Rel(partner_manager, partner_call_center, "Консультирует по файлам со ставками", "Локальные файлы")
+Rel(deposit_manager, banking_system, "Управляет ставками", "Веб-интерфейс")
+
+Rel(banking_system, call_center_system, "Передает актуальные ставки", "REST API")
+Rel(banking_system, sftp_server, "Отправляет файлы со ставками", "SFTP")
+Rel(partner_call_center, sftp_server, "Загружает файлы со ставками", "SFTP")
+
+Rel(call_center_system, banking_system, "Логи обращений клиентов", "REST API")
+Rel(banking_system, deposit_manager, "Отчеты о передаче ставок", "Уведомления")
+
+@enduml 
