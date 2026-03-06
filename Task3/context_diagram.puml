@@ -1,0 +1,29 @@
+@startuml context_diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Контекстная диаграмма MVP открытия депозитов онлайн
+
+Person(new_client, "Новый клиент", "Подает заявку на депозит через сайт банка")
+Person(existing_client, "Существующий клиент", "Подает заявку на депозит через интернет-банк")
+Person(call_center_manager, "Менеджер кол-центра", "Обрабатывает заявки с сайта, консультирует клиентов")
+Person(back_office_manager, "Менеджер бэк-офиса", "Обрабатывает заявки на депозиты, рассчитывает ставки")
+Person(branch_manager, "Менеджер отделения", "Завершает оформление депозита при визите клиента")
+
+System(banking_system, "Банковская система Стандарт", "Обеспечивает онлайн-подачу заявок на депозиты через сайт и интернет-банк с обработкой в бэк-офисе")
+
+System_Ext(sms_gateway, "СМС-шлюз", "Отправляет СМС-уведомления клиентам")
+System_Ext(cb_rates, "Центральный банк", "Предоставляет ставку рефинансирования")
+
+Rel(new_client, banking_system, "Подает заявку на депозит", "HTTPS")
+Rel(existing_client, banking_system, "Подает заявку на депозит", "HTTPS")
+Rel(call_center_manager, banking_system, "Обрабатывает заявки", "Веб-интерфейс")
+Rel(back_office_manager, banking_system, "Работает с АБС", "Десктоп клиент")
+Rel(branch_manager, banking_system, "Работает с АБС", "Десктоп клиент")
+
+Rel(banking_system, sms_gateway, "Отправляет СМС", "API")
+Rel(banking_system, cb_rates, "Получает ставку рефинансирования", "API")
+
+Rel(banking_system, new_client, "Уведомления о статусе заявки", "СМС")
+Rel(banking_system, existing_client, "Уведомления о статусе заявки", "СМС")
+
+@enduml 

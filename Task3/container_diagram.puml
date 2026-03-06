@@ -1,0 +1,60 @@
+@startuml container_diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Диаграмма контейнеров MVP открытия депозитов онлайн
+
+Person(new_client, "Новый клиент", "Подает заявку на депозит через сайт")
+Person(existing_client, "Существующий клиент", "Подает заявку на депозит через интернет-банк")
+Person(call_center_manager, "Менеджер кол-центра", "Обрабатывает заявки с сайта")
+Person(back_office_manager, "Менеджер бэк-офиса", "Обрабатывает заявки на депозиты")
+
+System_Boundary(banking_system, "Банковская система Стандарт") {
+
+    Container(website, "Сайт банка", "PHP + React.js", "Отображает депозиты и принимает заявки от новых клиентов")
+    Container(internet_bank, "Интернет-банк", "ASP.NET MVC + MS SQL", "Обеспечивает подачу заявок существующими клиентами")
+
+    Container(api_gateway, "API Gateway", ".NET Core", "Централизует API, разгружает АБС, обеспечивает кэширование")
+    Container(rates_service, "Сервис управления ставками", "Java Spring Boot", "Управляет ставками, заменяет Excel-процессы")
+
+    Container(call_center_system, "Система кол-центра", "Java Spring Boot + PostgreSQL", "Обрабатывает заявки с сайта")
+    Container(abs_system, "АБС", "Delphi + Oracle + PL/SQL", "Основная система учета, обработка заявок бэк-офисом")
+
+    ContainerDb(internet_bank_db, "БД Интернет-банка", "MS SQL Server", "Данные клиентов, сессии")
+    ContainerDb(rates_db, "БД Ставок", "MS SQL Server", "Актуальные ставки по депозитам")
+    ContainerDb(call_center_db, "БД Кол-центра", "PostgreSQL", "Заявки, обращения клиентов")
+    ContainerDb(abs_db, "БД АБС", "Oracle", "Основные банковские данные")
+}
+
+System_Ext(sms_gateway, "СМС-шлюз", "Отправка СМС-уведомлений")
+System_Ext(cb_rates_api, "API Центробанка", "Ставка рефинансирования")
+
+Rel(new_client, website, "Просматривает депозиты, подает заявки", "HTTPS")
+Rel(existing_client, internet_bank, "Подает заявки на депозиты", "HTTPS")
+Rel(call_center_manager, call_center_system, "Работает с заявками", "Веб-интерфейс")
+Rel(back_office_manager, abs_system, "Обрабатывает заявки", "Десктоп клиент")
+
+Rel(website, api_gateway, "Получает ставки", "REST API")
+Rel(internet_bank, api_gateway, "Получает ставки, передает заявки", "REST API")
+Rel(api_gateway, rates_service, "Запрашивает ставки", "REST API")
+Rel(api_gateway, abs_system, "Передает заявки", "REST API")
+
+Rel(website, call_center_system, "Передает заявки", "REST API")
+Rel(call_center_system, abs_system, "Создает обращения", "REST API")
+
+Rel(abs_system, sms_gateway, "Отправляет СМС", "REST API")
+Rel(rates_service, cb_rates_api, "Получает ставку ЦБ", "REST API")
+
+Rel(internet_bank, internet_bank_db, "Читает/записывает", "SQL")
+Rel(rates_service, rates_db, "Читает/записывает", "SQL")
+Rel(call_center_system, call_center_db, "Читает/записывает", "SQL")
+Rel(abs_system, abs_db, "Читает/записывает", "SQL/PL-SQL")
+
+Lay_R(website, internet_bank)
+Lay_R(api_gateway, rates_service)
+Lay_R(call_center_system, abs_system)
+Lay_D(internet_bank, internet_bank_db)
+Lay_D(rates_service, rates_db)
+Lay_D(call_center_system, call_center_db)
+Lay_D(abs_system, abs_db)
+
+@enduml 
